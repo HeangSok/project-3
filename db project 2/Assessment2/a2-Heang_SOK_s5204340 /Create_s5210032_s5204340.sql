@@ -1,0 +1,133 @@
+-- Assignment Part 2: Designing a Database for BigM
+
+-- Task 1:
+
+-- I. Creat a database named BigM_s5210032_s5204340.sql
+
+DROP DATABASE IF EXISTS BigM_s5210032_s5204340;
+CREATE DATABASE IF NOT EXISTS BigM_s5210032_s5204340;
+USE BigM_s5210032_s5204340;
+SHOW TABLES;
+
+-- II. Create all of the tables for the database according to the database schema
+
+
+CREATE TABLE IF NOT EXISTS CUSTOMER (
+	Cust_Number		INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	Cust_FName		VARCHAR(30),
+	Cust_LName		VARCHAR(30),
+	Cust_Phone		CHAR(10)
+) ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS PRODUCT (
+	Prod_Num		INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	Prod_Desc		VARCHAR(50),
+	Prod_Size		VARCHAR(10),
+	Prod_Price		DECIMAL(4,2)
+) ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS DEPARTMENT (
+	Dept_ID		INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	Dept_Name 	VARCHAR(40)
+) ENGINE = InnoDB;
+
+-- Create EMPLOYEE table without StrDept_ID (FOREIGN KEY). 
+-- StrDept_ID will be added in the later step.
+
+
+CREATE TABLE IF NOT EXISTS EMPLOYEE (
+	Emp_ID			INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	Emp_FName		VARCHAR(30),
+	Emp_LName		VARCHAR(30),
+	Emp_Phone		CHAR(10),
+	Emp_DoB			DATE,
+	Emp_StartDate	DATE,
+	Emp_TaxFNum		CHAR(15),
+	Emp_HourlySalary	DECIMAL(10,2),
+	SupvisorID 		INT,
+	FOREIGN KEY (SupvisorID) REFERENCES EMPLOYEE (Emp_ID)
+) ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS STORE (
+	Str_Num			INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	Str_Name		VARCHAR(50),
+	Str_Phone		CHAR(10),
+	Str_Fax			CHAR(10),
+	Str_Email		VARCHAR(40),
+	StoreManagerID	INT NOT NULL,
+	SupStore_Num	INT,
+	FOREIGN KEY (StoreManagerID) REFERENCES EMPLOYEE (Emp_ID),
+	FOREIGN KEY (SupStore_Num) REFERENCES STORE (Str_Num)
+) ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS STOREDEPARTMENT (
+	StrDept_ID		INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	StrDept_Phone	CHAR(10),
+	StrDept_Email	VARCHAR(40),
+	DeptSupervisorID	INT NOT NULL,
+	Str_Num			INT NOT NULL,
+	Dept_ID			INT NOT NULL,
+	FOREIGN KEY (DeptSupervisorID) REFERENCES EMPLOYEE (Emp_ID),
+	FOREIGN KEY (Str_Num) REFERENCES STORE (Str_Num),
+	FOREIGN KEY (Dept_ID) REFERENCES DEPARTMENT (Dept_ID)
+) ENGINE = InnoDB;
+
+-- Add StrDept_ID to EMPLOYEE table.
+
+ALTER TABLE EMPLOYEE
+	ADD StrDept_ID INT,
+	ADD FOREIGN KEY (StrDept_ID) REFERENCES STOREDEPARTMENT (StrDept_ID);
+
+-- Note: In PAYSLIP table numbers of working hours are calculated in 2 fortnights 
+
+CREATE TABLE IF NOT EXISTS PAYSLIP (
+	Pay_ID					INT NOT NULL Primary KEY AUTO_INCREMENT,
+	Pay_date				DATE,
+	Pay_num_of_hours		DECIMAL(6,2),
+	Pay_amount_gross		DECIMAL(6,2),
+	Emp_ID 					INT NOT NULL,
+	Str_Num					INT NOT NULL,
+	FOREIGN KEY (Emp_ID) REFERENCES EMPLOYEE (Emp_ID),
+	FOREIGN KEY (Str_Num) REFERENCES STORE (Str_Num)
+) ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS INVENTORY (
+	ProductNum		INT NOT NULL,
+	Str_Num			INT NOT NULL,
+	Inv_QntyOnHand	INT,
+	Inv_QtyOrdered	INT,
+	PRIMARY KEY (ProductNum, Str_Num),
+	FOREIGN KEY (ProductNum) REFERENCES PRODUCT (Prod_Num),
+	FOREIGN KEY (Str_Num) REFERENCES STORE (Str_Num)
+) ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS CUSTOMERORDER (	
+	CustOrd_ID		INT NOT NULL Primary KEY AUTO_INCREMENT,
+	CustOrd_Date	DATE,
+	Cust_Number		INT NOT NULL,
+	Str_Num			INT NOT NULL,
+	FOREIGN KEY (Cust_Number) REFERENCES CUSTOMER (Cust_Number),
+	FOREIGN KEY (Str_Num) REFERENCES STORE (Str_Num)
+) ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS ORDERLINE (	
+	CustOrd_ID			INT NOT NULL,
+	Prod_Num			INT NOT NULL,
+	OrdLn_DateArrived	DATE,
+	OrdLn_DatePicked	DATE,
+	OrdLn_Qnty			INT,
+	PRIMARY KEY (CustOrd_ID, Prod_Num),
+	FOREIGN KEY (CustOrd_ID) REFERENCES CUSTOMERORDER (CustOrd_ID),
+	FOREIGN KEY (Prod_Num) REFERENCES PRODUCT (Prod_Num)
+) ENGINE = InnoDB;
+
+
+
+
